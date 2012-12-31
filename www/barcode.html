@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title></title>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no;" />
+		<meta charset="utf-8">
+
+		<script type="text/javascript" charset="utf-8" src="js/jquery-1.8.2.min.js"></script>
+		<script type="text/javascript" charset="utf-8" src="js/base64.js"></script>
+		<script type="text/javascript" charset="utf-8" src="js/cordova-1.5.0.js"></script>
+		<script type="text/javascript" charset="utf-8" src="js/barcodescanner.js"></script>
+		<script type="text/javascript" charset="utf-8" src="js/main.js"></script>
+
+
+		<script type="text/javascript">
+			$(document).ready(function() {
+				document.addEventListener("deviceready", onDeviceReady, false);
+			});
+
+			function onDeviceReady() {
+
+				// barcode読み取り
+				window.plugins.barcodeScanner.scan(function(result) {
+					
+					// キャンセル
+					if (result.cancelled) {
+						
+						window.location.href = 'show_item_index.html'
+						
+					// 読み取り
+					} else {
+						// 読み取り成功
+
+						// speed-orderを含むか判定
+						if (result.text.match(/www.exorder.jp|exorder.jp/i)) {
+							scannerSuccess(result.text);
+						} else {
+							
+							// オーディオ再生
+							var src = 'mp3/cancel.mp3';
+							audio = new Media(src, null, null);
+							audio.play();
+						
+							// ダイアログ表示 121218 ogawa
+							var params = {
+								title: 'QRコードが違います',
+								message: 'このQRコードは、ExOrderのQRコードではありません。正しいQRコードを読み込んでください。',
+								sleep: 3000,
+								url: 'barcode.html'
+							}
+							var paramsText = JSON.stringify(params);
+							// setLocalStorage('popup', paramsText);
+							window.location.href = "popup.html?popup=" + paramsText;
+						}
+					}
+				}, function(error) {
+					// 読み取り失敗
+					scannerFailure(error);
+				});
+			}
+
+			// Barcode 読み込み成功　-------------------------------------------------------------
+			function scannerSuccess(result) {
+
+				// オーディオ再生
+				var src = 'mp3/decide.mp3';
+				audio = new Media(src, null, null);
+				audio.play();
+
+				// qr_id抽出
+				cutProtocole = result.replace(/http:\/\/|https:\/\//, "");
+				var qr_id = cutProtocole.replace(/www.speed-order.jp\/|speed-order.jp\/|www.exorder.jp\/|exorder.jp\//, "");
+				console.log("scannerSuccess: qr_id: " + qr_id);
+
+				window.location.href = 'show_item.html?flg=barcode&qr_id=' + String(qr_id) + '&latitude=' + null + '&longitude=' + null;
+			}
+
+			// Barcode 読み込み失敗　---------------------------------------------------------------
+			function scannerFailure(message) {
+				
+				// オーディオ再生
+				var src = 'mp3/cancel.mp3';
+				audio = new Media(src, null, null);
+				audio.play();
+
+				// ダイアログ表示 121218 ogawa
+				var params = {
+					title: 'QRコードの読み取りに失敗しました',
+					message: 'もう一度QRコードを撮影してください',
+					sleep: 3000,
+					url: 'barcode.html'
+				}
+				var paramsText = JSON.stringify(params);
+				// setLocalStorage('popup', paramsText);
+				window.location.href = "popup.html?popup=" + paramsText;
+			}
+
+		</script>
+	</head>
+
+	<body style="background-color: rgba(0,0,0,0.4);">
+	</body>
+</html>
